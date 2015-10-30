@@ -1,0 +1,205 @@
+import Data.List
+
+mapa1 = ["..#",
+        "#.#",
+        ".#."]
+        
+mapa = ["..#.",
+        "#.#.",
+        ".#.#"]        
+        
+
+mapa2 = [".#..#....",
+        "...###...",
+        "..#.#.#..",
+        ".#..#..#.",
+        "....#....",    
+        "....#....", 
+        "....#####"] 
+        
+               
+data Point = Point Int Int
+      deriving(Show)
+
+f :: Point -> Int
+f (Point x _) = x
+
+s :: Point -> Int
+s (Point _ y) = y
+
+up :: Point -> Point
+up (Point x y) = (Point x (y-1))
+
+down :: Point -> Point
+down (Point x y) = (Point x (y+1))
+
+left :: Point -> Point
+left (Point x y) = (Point (x-1) y)
+
+right :: Point -> Point
+right (Point x y) = (Point (x+1) y)
+
+start :: Point        
+start = Point 0 0 -- (row, col)
+end :: Point
+end = Point 2 0
+
+h :: Int
+h = length mapa
+w :: Int
+w = length (head(mapa))
+
+get_item :: Point -> Char
+get_item (Point x y) = (mapa !! y) !! x
+print_map = putStr(concat(map(++"\n") mapa))
+     
+eq :: Point -> Point -> Bool
+eq (Point x1 y1) (Point x2 y2) = (x1 == x2) && (y1 == y2)
+  
+check_point :: Point -> Bool
+check_point (Point x y) = if x < w && x >= 0 && y >= 0 && y < h then True
+                        else False
+
+  
+data Node = Node Int Int
+      deriving(Show)     
+          
+type Graph = [(Node, [Node])]
+
+freePoints = [(c,r) | r<- [0..(h-1)], c<- [0..(w-1)], get_item (Point c r) == '.']
+
+checkval x y r c | x == r && y == c = False
+                 | otherwise = True 
+
+setNodes [] = []
+setNodes ((x,y):xs) = ((Node x y),[(Node r c) | (r,c)<- freePoints,
+                                                checkval x y r c,
+                                                abs (x - r) < 2,
+                                                abs (y - c) < 2]): setNodes xs
+
+
+gg = [((Node 0 0),[(Node 8 8)]),
+      ((Node 1 1),[(Node 3 3),(Node 7 7),(Node 9 9),(Node 2 2)]),
+      ((Node 2 2),[(Node 8 8),(Node 1 1),(Node 4 4)]),
+      ((Node 3 3),[(Node 4 4),(Node 5 5),(Node 1 1)]),
+      ((Node 4 4),[(Node 2 2),(Node 3 3)]),
+      ((Node 5 5),[(Node 3 3),(Node 6 6)]),
+      ((Node 6 6),[(Node 7 7),(Node 5 5)]),
+      ((Node 7 7),[(Node 1 1),(Node 6 6)]),
+      ((Node 8 8),[(Node 2 2),(Node 0 0),(Node 9 9)]),
+      ((Node 9 9),[(Node 1 1),(Node 8 8)])]
+
+                                                                                                                                  
+graph :: Graph
+graph = setNodes freePoints
+--graph = gg
+
+
+getNodeFromGraph :: Graph -> Int -> Int -> (Node, [Node])
+getNodeFromGraph graph x y = head([(n, neighbourNode)| (n@(Node xx yy), neighbourNode) <- graph, x == xx, y == yy])
+
+getNode node@(Node x y)= head([ (n,neighbourNode) | (n@(Node xx yy),
+                                                    neighbourNode) <- graph,
+                                                    x == xx, y == yy])
+
+
+--QUEUE
+data Queue a = Queue [a] 
+      deriving(Show)
+
+push :: a -> Queue a -> Queue a
+push item (Queue q) = Queue (q ++ [item])
+
+pushBulk :: [a] -> Queue a -> Queue a
+pushBulk items (Queue q) = Queue (q ++ items)
+
+pop :: Queue a -> (a, Queue a)
+pop (Queue q) = (head q, Queue $ tail q)
+
+peek :: Queue a -> a
+peek (Queue q) = head q
+
+empty :: Queue a -> Bool
+empty (Queue q) = (length q) == 0
+
+--QUEUE
+
+checkvisited :: [(Int, Int)] -> (Int, Int) -> Bool
+checkvisited [] (_,_) = False
+checkvisited xs (x1, y1) = elem (x1, y1) xs  
+                  
+fieldReplace :: [(Node, Node)] -> Node -> Node -> [(Node, Node)]
+fieldReplace [] _ _ = []
+fieldReplace (pair@((Node ax ay),(Node bx by)):xs) (key@(Node kx ky)) (val@(Node vx vy)) = if ax == kx && ay == ky then (((Node ax ay), val)):fieldReplace xs key val
+else
+   pair:fieldReplace xs key val    
+
+  
+fieldReplaces :: [(Node, Node)] -> [Node] -> Node -> [(Node, Node)]
+fieldReplaces p [] _ = p
+fieldReplaces (xs) (key@(Node kx ky):ys) (val@(Node vx vy)) = fieldReplaces (fieldReplace xs key val) ys val
+
+--bfs -> dokud fronta neni prazdna tak vzit prvek z fronty a jeho sousedy vlozit do 
+--fronty, takto se projde cely graf a jednotlive prvky ve fronte obsahuji nekratsi
+--cestu         
+             
+bfs3 :: Queue (Node, [Node]) -> [(Int, Int)] -> [(Node, Node)] -> [(Node,Node)]   -- [(Node, ParentNode)] == Path       
+bfs3 q visited parent = 
+  if empty q then parent
+  else
+    let getLastNode :: (Node, [Node])
+        getLastNode = peek q
+        getNeighbours :: [(Node, [Node])]
+        getNeighbours = [(getNode neighbour) | (neighbour@ (Node x y)) <- snd(                                                                                                                                                                                getLastNode),
+         (not (checkvisited visited (x,y)))]
+        addNewNeighboursToQ :: Queue(Node, [Node])
+        addNewNeighboursToQ = (pushBulk getNeighbours (snd(pop q)))
+        addNewNodesToVisited :: [(Node, [Node])] -> [(Int, Int)]
+        addNewNodesToVisited nodes = [(x,y)| (node@(Node x y), neigh) <- nodes]
+        newParent :: [(Node, Node)] -> [Node] -> [(Node, Node)] 
+        newParent pair nodes = fieldReplaces pair nodes (fst(getLastNode))
+        newParent pair [] = pair
+         
+    in (bfs3 addNewNeighboursToQ (visited ++ (addNewNodesToVisited getNeighbours)) (newParent parent ([n | (n,ne)<-getNeighbours])))      
+                  
+
+   
+snode = getNodeFromGraph graph 0 0
+enode = getNodeFromGraph graph 3 0
+
+initPrev :: [(Node, Node)]
+initPrev = [(node, (Node (-1) (-1))) | (node, neigh) <- graph]
+testbfs = bfs3 (Queue([snode])) ([(0,0)]) initPrev
+
+
+rmdups :: Eq a => [a] -> [a]
+rmdups [] = []
+rmdups (x:xs)   | x `elem` xs   = rmdups xs
+                | otherwise     = x : rmdups xs
+
+ccc = [((x,y),(xx,yy)) | (n@(Node x y), n2@(Node xx yy)) <- testbfs, xx /= -1]
+
+
+printpath _ [] = []
+printpath (sx,sy) (((x,y),(xx,yy)):xs) = if xx /= -1 then (sx,sy):printpath (xx,yy) xs else []
+
+
+
+getItemFromPath :: Node -> [(Node, Node)] -> Node
+getItemFromPath _ [] = (Node (-1) (-1))
+getItemFromPath or@(Node x y) (((Node a b),(Node aa bb)):path) = if x == a && y == b then (Node aa bb) else getItemFromPath or path
+                                                   
+shortestPath :: Graph -> Int -> Int -> Int -> Int -> [Node]
+shortestPath graph sx sy ex ey = let checkbounders (sx,sy) (ex,ey) = if (elem (sx,sy) freePoints) && 
+                                        (elem (ex,ey)  freePoints) then True else False 
+                                     
+                                     getPath = bfs3 (Queue([getNodeFromGraph graph sx sy])) ([(sx,sy)]) initPrev
+                                     path :: (Node) -> [(Node, Node)] -> [(Node)]
+                                     path n@(Node ex ey) p = let next = getItemFromPath n p
+                                                                in if ex /= -1 then next:path next p
+                                                                   else
+                                                                      []
+                                     finalPath =  (Node ex ey):init((path (Node ex ey) getPath))                                
+                                 in if (checkbounders (sx,sy) (ex,ey)) then finalPath else []  
+       
+         
