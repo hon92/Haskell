@@ -1,0 +1,213 @@
+import Data.Char
+import Data.List
+--sum :: Float -> Float -> Float
+--sum x y = x + y
+
+max :: Int -> Int -> Int
+max a b = if a > b then a
+	  else b
+
+
+fact 0 = 1
+fact (n+1) = (n+1) * fact n
+                   
+pr :: [Char] -> [Char]
+pr (x:xs) = xs                                                            
+
+--1
+len :: [a] -> Int
+len [] = 0
+len (x:xs) = 1+len(xs)
+
+--2
+merge :: [a] -> [a] -> [a]
+merge [] x = x
+merge (x:xs) y = x:(merge xs y)
+
+--3
+merge_to_tuple :: [a] -> [b] -> [(a,b)]
+merge_to_tuple _ [] = []
+merge_to_tuple [] _ = []
+merge_to_tuple (x:xs) (y:ys) = (x,y):merge_to_tuple xs ys
+
+--4
+reverse_field :: [a] -> [a]
+reverse_field [] = []
+reverse_field (x:xs) = merge (reverse_field xs) (x:[])
+
+otoc2 :: [a] -> [a] -> [a]
+otoc2 [] y = y 
+otoc2 (x:xs) y = otoc2 xs (x:y)
+
+
+--5
+merge_fn :: (Num a) => [a] -> (a -> a -> a) -> [a] -> [a]
+merge_fn _ _ [] = []
+merge_fn [] _ _ = []
+merge_fn (x:xs) op (y:ys) = (op x y) : (merge_fn xs op ys)
+
+--6
+-- x1 * y1 + x2 * y2
+
+--scal_vec :: (Int, Int) -> (Int, Int) -> Int
+--scal_vec (x1, y1) (x2, y2) = x1*x2 + y1*y2 
+scal_vec :: [Int] -> [Int] -> Int
+scal_vec [x] [y] = x*y
+scal_vec (x:xs) (y:ys) = (x*y) + scal_vec xs ys
+
+--7
+car_product:: [Int] -> [Int] -> [(Int, Int)]
+car_product xs ys = [(x,y) | x <- xs, y <- ys]
+
+--8
+find_min :: (Ord a) => [a] -> a
+find_min [] = error "error"
+find_min [x] = x
+find_min (x:y:xs) = if x < y then find_min(x:xs)
+		  else find_min(y:xs)
+
+
+
+um :: (Num a ) => [a] -> [a]
+um (xs) = [(x*x) | x <-xs] 
+
+
+
+
+to ::  [Char] -> [Char]
+to [] = []
+to (xs) = [if isLower x then toUpper x 
+              else x | x <- xs]
+
+
+
+divi :: Int -> [Int]
+divi n = [v | v <-[1..n], n `mod` v == 0]
+                                                
+prvo n = length (divi n) <= 2
+
+
+
+set_inter xs ys = [xv | xv <- xs, yv <- ys, elem xv ys, elem yv xs]
+set_union xs ys = xs ++ [y |y <- ys, not (elem y xs)]
+set_inter2 xs ys = [y | y <- ys, elem y xs]
+
+set_subset xs ys = length (set_union xs ys) == length ys
+set_comple xs ys = []
+
+
+
+type Person  = String
+type Book  = String
+type Database  = [(Person, Book)]
+
+data1 = [("Marek", "Babicka"), ("Jana", "Babicka"), ("Marek","Haskell")]
+ 
+books :: Database -> Person -> [Book]
+books db p = [b | (p1,b) <- db, p1 == p]
+
+borrowers :: Database -> Book -> [Person] 
+borrowers db book = [p1 | (p1,b1) <- db, book == b1]
+
+borroved :: Database -> Book -> Bool
+borroved db b = length (borrowers db b) > 0
+
+numBorroved :: Database -> Book -> Int
+numBorroved db b = length (borrowers db b)
+
+
+type Pic = [String]
+obr :: Pic
+obr = [ 
+ "....#....",
+ "...###...",
+ "..#.#.#..",
+ ".#..#..#.",
+ "....#....",
+ "....#....",
+ "....#####"] 
+
+pp :: Pic -> IO ()
+pp = putStr . concat . map (++"\n") 
+
+tt :: Pic -> IO ()
+tt obr = putStr (concat (map (++"\n") obr))
+
+flipH :: Pic -> IO ()
+flipH pic = putStr (concat (map (++"\n") (reverse obr)))
+
+
+flipV :: Pic -> IO ()
+ff obr = map(reverse) obr
+flipV pic = putStr (concat (map (++"\n") (ff obr))) 
+
+sideBySide :: Pic -> Pic -> Pic
+sideBySide p1 p2 = zipWith (++) p1 p2
+
+above p1 p2 = p1 ++ p2
+
+
+rotate_left :: Pic -> Pic
+rotate_left obr = reverse(transpose(obr))
+
+rotate_right :: Pic -> Pic
+rotate_right obr = transpose (reverse(obr))
+
+
+
+
+
+
+type Name = String
+type Price = Int
+type BarCode = Int
+type Database2 = [(BarCode, Name, Price)]
+type TillType = [BarCode]
+type BillType = [(Name,Price)]
+
+
+size :: Int
+size = 20
+
+d :: Database2
+d = [(111, "Mleko", 20), (123, "Chleba", 25), (555, "Piskoty", 35)]
+
+ac :: [Int]
+ac = [111,555,123]
+
+getElement :: Int -> Database2 -> (Name, Price)
+getElement bc db = head [(n, p) | (b, n, p) <- db, b == bc]
+
+
+formatElement (n, p) = let 
+                        size1 = length n
+                        size2 = length (show p)
+                       in n ++ (replicate (size - size1 - size2) '.') ++ (show p)
+
+makeBill :: TillType -> BillType
+makeBill till = [getElement x d | x <- till]
+formatBill :: BillType -> String
+formatBill bill = concat ([(formatElement x) ++ "\n" | x <-bill] ++ [formatElement("Celkem", sum [p | (bc, n, p) <- d])])
+produceBill :: TillType -> String
+produceBill = formatBill. makeBill
+
+
+
+
+text :: String
+text = "In computer science,          functional programming is a programming  paradigm that treats computation    as           the evaluation of mathematical functions and avoids state and mutable data.    It emphasizes the application of functions, in contrast to the imperative  programming style, which emphasizes changes in state."
+
+whitespace = ['\n', '\t', ' ']
+lineLength = 30
+
+--parse :: String -> String
+--parse (x:xs) =  
+
+--splitStringByLength :: String -> [String]
+--splitStringByLength (x:xs) len = splitStringByLength len --0   
+--splitStringByLength (x:xs) len ci 
+--        | ci <= len = x:[]
+--        | ci > len =
+
+
+--takeChars = takeWhile ('\t'>) text          
