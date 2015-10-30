@@ -1,0 +1,24 @@
+module Stack (Stack, isEmpty, push, pop, top) where
+
+newtype Stack a = Stack [a]
+           
+push :: a -> Stack a -> Stack a
+push i (Stack xs) = Stack (i:xs)
+
+isEmpty :: Stack a -> Bool
+isEmpty (Stack s) = (length s == 0)
+
+
+
+showStack (Stack []) = []
+showStack (Stack (i:s)) = (show i)++ showStack (Stack s)
+
+--pop :: Stack a -> (a, Stack a)
+pop stack@ (Stack s) = if (not (isEmpty (Stack s))) 
+                        then (last s, showStack(Stack (init s)))
+                       else error "Empty stack"
+
+top :: Stack a -> a
+top (Stack a) = last a
+
+
