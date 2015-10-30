@@ -1,0 +1,52 @@
+data Expr =  Num Int 
+             | Add Expr Expr     
+             | Sub Expr Expr     
+             | Mul Expr Expr     
+             | Div Expr Expr     
+             | Var Char     
+             deriving (Eq) 
+             
+exp1 :: Expr
+exp1 = Add (Num 3) (Mul (Num 5)(Num 8)) 
+
+
+eval :: Expr -> Int
+eval (Num x) = x
+eval (Add x y) = (eval x)  + (eval y)
+eval (Mul x y) = (eval x) * (eval y)
+eval (Sub x y) = (eval x) - (eval y)
+eval (Div x y) = (eval x) `div` (eval y)
+
+showExpr :: Expr -> String
+showExpr (Num x) = show x
+showExpr (Add x y) = "(" ++ (showExpr x) ++ " + " ++  (showExpr y) ++")"
+showExpr (Mul x y) = "(" ++ (showExpr x) ++ " * "++ (showExpr y) ++")"
+showExpr (Sub x y) = "(" ++ (showExpr x) ++ " - " ++  (showExpr y) ++")"
+showExpr (Div x y) = "(" ++ (showExpr x) ++ " / " ++  (showExpr y) ++")"
+
+
+showExpr2 :: Expr -> Int -> String
+showExpr2 (Num x)   p = show x
+showExpr2 (Add x y) p  = let
+                            text = (showExpr2 x 0) ++ " + " ++  (showExpr2 y 0)
+                        in if p > 0 then "(" ++ text ++ ")"
+                          else text
+showExpr2 (Mul x y) p = (showExpr2 x 1) ++ " * " ++  (showExpr2 y 1) 
+showExpr2 (Sub x y) p = (showExpr2 x 0) ++ " - " ++  (showExpr2 y 0) 
+showExpr2 (Div x y) p = (showExpr2 x 1) ++ " / " ++  (showExpr2 y 1)
+showExpr2 (Var x) _ = [x]
+
+
+deriv :: Expr -> Char -> Expr
+deriv (Num x) p = Num 0
+deriv (Add x y) p = Add (deriv x p) (deriv y p)
+deriv (Mul x y) p = Add (Mul y (deriv x p)) (Mul x (deriv y p))
+deriv (Sub x y) p = Sub (deriv x p) (deriv y p)
+deriv (Div x y) p = Div (Sub (Mul y (deriv x p)) (Mul x (deriv y p))) (Mul y y)
+deriv (Var x) p = if x == p then Num 1 else Num 0
+
+
+
+instance Show Expr where
+ show x = showExpr x     
+ 
